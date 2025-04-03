@@ -86,21 +86,108 @@ function drawBricks() {
     })
 }
 
+function movePaddle() {
+    paddle.x += paddle.dx;
+
+    if (paddle.x + paddle.w > canvas.width) {
+        paddle.x = canvas.width - paddle.w;
+    }
+
+    if (paddle.x < 0) {
+        paddle.x = 0;
+    }
+}
+
+function moveBall() {
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    if (ball.x + ball.size > canvas.width || ball.x - ball.size < 0) {
+        ball.dx *= -1;
+    }
+
+    if (ball.y + ball.size > canvas.height || ball.y - ball.size < 0) {
+        ball.dy *= -1;
+    }
+
+    if (ball.x - ball.size > paddle.x && ball.x + ball.size < paddle.x + paddle.w && ball.y + ball.size > paddle.y) {
+            ball.dy = -ball.speed;
+    }
+
+    bricks.forEach(column => {
+        column.forEach(brick => {
+            if (brick.visible) {
+                if (
+                    ball.x - ball.size > brick.x &&
+                    ball.x + ball.size < brick.x + brick.w &&
+                    ball.y + ball.size > brick.y &&
+                    ball.y - ball.size < brick.y + brick.h
+                ) {
+                    ball.dy *= -1;
+                    brick.visible = false;
+                    increaseScore();
+                }
+            }
+        });
+    });
+
+    if (ball.y + ball.size > canvas.height) {
+        showAllBricks();
+        score = 0;
+    }
+}
+
+function increaseScore() {
+    score++;
+
+    if (score % (brickRowCount * brickRowCount) === 0) {
+        showAllBricks();
+    }
+}
+
+function showAllBricks() {
+    bricks.forEach(column => {
+        column.forEach(brick => (brick.visible = true));
+    })
+}
+
 // render everything
 function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     drawBall();
     drawPaddle();
     drawScore();
     drawBricks();
 }
 
-draw();
-console.log(bricks)
+function update() {
+    movePaddle();
+    moveBall();
+    draw();
+    requestAnimationFrame(update);
+}
 
+draw();
+update();
+
+function keyDown(e) {
+    if (e.key === 'Right' || e.key === 'ArrowRight') {
+        paddle.dx = paddle.speed;
+    } else if (e.key === 'Left' || e.key === 'ArrowLeft') {
+        paddle.dx = -paddle.speed;
+    }
+}
+
+function keyUp(e) {
+    if (e.key === 'Right' || e.key === 'ArrowRight' || e.key === 'Left' || e.key === 'ArrowLeft') {
+        paddle.dx = 0;
+    }
+}
 
 // // Keyboard event handlers
-// document.addEventListener('keydown', keyDown);
-// document.addEventListener('keyup', keyUp);
+document.addEventListener('keydown', keyDown);
+document.addEventListener('keyup', keyUp);
 
 // Rules and close event handlers
 rulesBtn.addEventListener('click', () => rules.classList.add('show'));
